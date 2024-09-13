@@ -7,24 +7,29 @@ correctamente. Tenga en cuenta datos faltantes y duplicados.
 
 """
 import pandas as pd
+import re
+from datetime import datetime
 
 def clean_data():
-    # Cargar el DataFrame desde el archivo CSV
-    df = pd.read_csv("solicitudes_credito.csv", sep=";")
 
-    # Tratar datos faltantes
-    # Eliminar filas con datos faltantes en cualquier columna
-    df.dropna(inplace=True)
+    df = pd.read_csv("solicitudes_credito.csv", sep=";", index_col=0)
+    
+    strings = [df[col].name for col in df.columns if df[col].dtype == 'object' and col != 'barrio' ]
+    df = df.replace('-', ' ', regex=True).replace('_',' ', regex=True)
+    
+    for i in strings:
+        df[i] = df[i].str.lower().str.strip()
 
-    # Tratar duplicados
-    # Eliminar filas duplicadas
-    df.drop_duplicates(inplace=True)
 
-    # Restablecer el índice después de eliminar filas
-    df.reset_index(drop=True, inplace=True)
+    df['barrio'] = df['barrio'].str.lower().replace('_', ' ', regex=True).replace('-', ' ', regex=True)
+    df["comuna_ciudadano"] = df["comuna_ciudadano"].astype(int)
+    df["estrato"] = df["estrato"].astype(int)
+    
+    df['fecha_de_beneficio'] = pd.to_datetime(df['fecha_de_beneficio'], format='%d/%m/%Y', errors='coerce').fillna(pd.to_datetime(df['fecha_de_beneficio'], format='%Y/%m/%d', errors='coerce'))
 
+    df['monto_del_credito'] = df['monto_del_credito'].str.strip(' ').str.replace('[ ,$]', '').str.replace('\.00','').astype(float)
+
+    df = df.dropna()
+    df = df.drop_duplicates()
+    
     return df
-
-# Llamar a la función clean_data para obtener el DataFrame limpio
-df_cleaned = clean_data()
-print(df_cleaned)
