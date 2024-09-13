@@ -6,30 +6,72 @@ Realice la limpieza del dataframe. Los tests evaluan si la limpieza fue realizad
 correctamente. Tenga en cuenta datos faltantes y duplicados.
 
 """
+
 import pandas as pd
-import re
-from datetime import datetime
+
 
 def clean_data():
 
-    df = pd.read_csv("solicitudes_credito.csv", sep=";", index_col=0)
-    
-    strings = [df[col].name for col in df.columns if df[col].dtype == 'object' and col != 'barrio' ]
-    df = df.replace('-', ' ', regex=True).replace('_',' ', regex=True)
-    
-    for i in strings:
-        df[i] = df[i].str.lower().str.strip()
+    def load_data():
+        df = pd.read_csv("solicitudes_credito.csv", sep=";", index_col=0)
+        return df
 
+    def clean_sexo_column(df):
+        df = df.copy()
+        df.sexo = df.sexo.str.lower()
+        return df
 
-    df['barrio'] = df['barrio'].str.lower().replace('_', ' ', regex=True).replace('-', ' ', regex=True)
-    df["comuna_ciudadano"] = df["comuna_ciudadano"].astype(int)
-    df["estrato"] = df["estrato"].astype(int)
-    
-    df['fecha_de_beneficio'] = pd.to_datetime(df['fecha_de_beneficio'], format='%d/%m/%Y', errors='coerce').fillna(pd.to_datetime(df['fecha_de_beneficio'], format='%Y/%m/%d', errors='coerce'))
+    def clean_tipo_de_emprendimiento_column(df):
+        df = df.copy()
+        df["tipo_de_emprendimiento"] = df["tipo_de_emprendimiento"].str.lower()
+        return df
 
-    df['monto_del_credito'] = df['monto_del_credito'].str.strip(' ').str.replace('[ ,$]', '').str.replace('\.00','').astype(float)
+    def clean_barrio_column(df):
+        df = df.copy()
+        df["barrio"] = df["barrio"].str.lower()
+        return df
 
-    df = df.dropna()
-    df = df.drop_duplicates()
-    
+    def clean_idea_negocio_column(df):
+        df = df.copy()
+        df["idea_negocio"] = df["idea_negocio"].str.lower().str.strip()
+        return df
+
+    def clean_linea_credito_column(df):
+        df = df.copy()
+        df["línea_credito"] = df["línea_credito"].str.lower().str.strip()
+        return df
+
+    def clean_comuna_ciudadano_column(df):
+        df = df.copy()
+        df["comuna_ciudadano"] = df["comuna_ciudadano"].astype(int)
+        return df
+
+    def clean_fecha_de_beneficio_column(df):
+        df = df.copy()
+        df["fecha_de_beneficio"] = pd.to_datetime(
+            df.fecha_de_beneficio, format="%d/%m/%Y", errors="coerce"
+        ).fillna(
+            pd.to_datetime(df.fecha_de_beneficio, format="%Y/%m/%d", errors="coerce")
+        )
+        return df
+
+    def clean_monto_del_credito_column(df):
+        df = df.copy()
+        df.monto_del_credito = df.monto_del_credito.str.rstrip()
+        df.monto_del_credito = df.monto_del_credito.replace("[,$]", "", regex=True)
+        df.monto_del_credito = df.monto_del_credito.replace("(\\.00$)", "", regex=True)
+        df.monto_del_credito = df.monto_del_credito.astype(float)
+        return df
+
+    df = load_data()
+    df = df.replace("-", " ", regex=True).replace("_", " ", regex=True)
+    df = clean_sexo_column(df)
+    df = clean_tipo_de_emprendimiento_column(df)
+    df = clean_barrio_column(df)
+    df = clean_idea_negocio_column(df)
+    df = clean_linea_credito_column(df)
+    df = clean_comuna_ciudadano_column(df)
+    df = clean_fecha_de_beneficio_column(df)
+    df = clean_monto_del_credito_column(df)
+    df = df.drop_duplicates().dropna()
     return df
